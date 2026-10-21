@@ -20,9 +20,9 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
+      # SDK Android sudah terpasang di runner ubuntu (lisensi diterima, ANDROID_HOME diset);
+      # AGP akan mengunduh komponen yang kurang sendiri. Tidak pakai setup-android karena
+      # versi aksinya mencoba memasang paket 'tools' yang sudah usang.
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
