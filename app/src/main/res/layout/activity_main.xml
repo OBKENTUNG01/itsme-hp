@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="It's Me HP"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:paddingBottom="4dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sambungkan HP ini ke dashboard It's Me milikmu. Aplikasi tetap terlihat; kamu beri izin layar dan berkas sendiri."
+            android:paddingBottom="16dp" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Alamat dashboard" />
+        <EditText
+            android:id="@+id/url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="https://domainku.com atau http://100.x.y.z:8750"
+            android:inputType="textUri"
+            android:autofillHints="" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Nama HP" android:paddingTop="10dp" />
+        <EditText
+            android:id="@+id/name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="HP"
+            android:inputType="text"
+            android:autofillHints="" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Token HP (dari tab HP di dashboard)" android:paddingTop="10dp" />
+        <EditText
+            android:id="@+id/token"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="token"
+            android:inputType="textVisiblePassword"
+            android:autofillHints="" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="18dp">
+            <Button android:id="@+id/start" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Mulai" />
+            <Button android:id="@+id/stop" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Berhenti" />
+        </LinearLayout>
+
+        <Button android:id="@+id/files" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Izinkan akses semua berkas" android:paddingTop="6dp" />
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="18dp"
+            android:text="Belum tersambung." />
+    </LinearLayout>
+</ScrollView>
