@@ -62,6 +62,8 @@
 
         <Button android:id="@+id/files" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Izinkan akses semua berkas" android:paddingTop="6dp" />
 
+        <Button android:id="@+id/control" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Izinkan kontrol (Accessibility)" android:paddingTop="6dp" />
+
         <TextView
             android:id="@+id/status"
             android:layout_width="match_parent"

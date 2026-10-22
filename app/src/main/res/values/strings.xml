@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">It\'s Me HP</string>
+    <string name="accessibility_desc">Memungkinkan kamu mengendalikan HP ini dari dashboard It\'s Me milikmu (sentuh, geser, ketik). Hanya aktif saat kamu nyalakan.</string>
 </resources>

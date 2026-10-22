@@ -47,6 +47,10 @@ class MainActivity : AppCompatActivity() {
             status("Dihentikan.")
         }
         findViewById<Button>(R.id.files).setOnClickListener { requestAllFiles() }
+        findViewById<Button>(R.id.control).setOnClickListener {
+            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            status("Di Setelan Aksesibilitas, nyalakan \"It's Me HP\" untuk mengizinkan kontrol.")
+        }
     }
 
     private fun save() {

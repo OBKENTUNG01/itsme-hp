@@ -80,6 +80,7 @@ class HpService : Service() {
             val caps = JSONArray().apply {
                 put("fs")
                 if (capture != null) put("screen")
+                if (HpAccessibility.instance != null) put("input")
             }
             val req = JSONObject().apply {
                 put("name", name); put("token", token); put("caps", caps)
@@ -109,6 +110,16 @@ class HpService : Service() {
             }
             "fs_list" -> result(id, Files.list(cmd.optString("path", "")))
             "fs_read" -> result(id, Files.read(cmd.optString("path", "")))
+            "input" -> {
+                val acc = HpAccessibility.instance
+                if (acc == null) {
+                    result(id, JSONObject().put("error", "kontrol belum diizinkan (nyalakan Accessibility)"))
+                } else {
+                    val m = metrics()
+                    acc.run(cmd.optJSONArray("events") ?: JSONArray(), m.widthPixels, m.heightPixels)
+                    result(id, JSONObject().put("ok", true))
+                }
+            }
         }
     }
 
