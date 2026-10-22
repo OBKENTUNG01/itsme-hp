@@ -39,7 +39,27 @@ rekam layar lewat izin Android (ada ikon "merekam"), dan akses berkas lewat izin
   butuh root (dibatasi Android).
 - iPhone tidak didukung (dibatasi Apple).
 
+## Android yang didukung & tanda tangan rilis
+
+- **Berjalan di Android 8.0 sampai yang terbaru** (`minSdk 26`, `targetSdk 34`;
+  `targetSdk` lama tetap jalan di Android 15/16+). Layanan latar sudah memakai tipe
+  `mediaProjection` + izin `FOREGROUND_SERVICE_MEDIA_PROJECTION` (wajib sejak Android 14).
+- **Tanda tangan rilis (supaya lebih tepercaya & update bisa menimpa versi lama):**
+  1. Buka tab **Actions** repo ini → **make-keystore** → **Run workflow** (sekali saja).
+  2. Unduh artifact **itsme-keystore**, buka **SECRETS.txt**, lalu tambahkan **4 secret**
+     yang tertera di **Settings → Secrets and variables → Actions**. Simpan berkas
+     `itsme.keystore` sebagai cadangan (jangan commit).
+  3. Build berikutnya (push, atau **Buat APK** di dashboard) otomatis memakai kunci itu.
+
+  Tanpa keystore, build tetap jalan tetapi APK ditandatangani kunci **debug** (kurang
+  tepercaya). Catatan jujur: karena dipasang di luar Play Store dan meminta izin layar +
+  Accessibility + semua berkas, Android **tetap** menampilkan peringatan "sumber tidak
+  dikenal"/Play Protect sekali saat memasang — itu bawaan sideload, bukan karena APK-nya
+  berbahaya. Tanda tangan rilis yang tetap mengurangi gesekan dan membuat update mulus.
+
 ## Bangun sendiri (opsional)
 
-Butuh Android SDK + JDK 17. Dari folder ini: `gradle assembleDebug`
-(APK di `app/build/outputs/apk/debug/app-debug.apk`).
+Butuh Android SDK + JDK 17. Dari folder ini: `gradle assembleRelease`
+(APK di `app/build/outputs/apk/release/`). Untuk APK bertanda tangan rilis, set env
+`ITSME_KEYSTORE` (path keystore), `ITSME_KEYSTORE_PASSWORD`, `ITSME_KEY_ALIAS`,
+`ITSME_KEY_PASSWORD` sebelum build; tanpa itu dipakai kunci debug.

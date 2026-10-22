@@ -57,11 +57,36 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Build debug APK
-        run: gradle assembleDebug --no-daemon --stacktrace
+      # Kalau 4 secret keystore ada, APK ditandatangani dengan kunci rilis tetap
+      # (lebih tepercaya, update bisa menimpa versi lama). Kalau belum ada, build
+      # tetap jalan dengan kunci debug - jalankan workflow "make-keystore" sekali
+      # lalu tambahkan secret-nya (lihat README).
+      - name: Decode keystore (kalau ada secret)
+        id: ks
+        env:
+          KS_B64: ${{ secrets.ITSME_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/itsme.keystore"
+            echo "path=$RUNNER_TEMP/itsme.keystore" >> "$GITHUB_OUTPUT"
+            echo "APK akan ditandatangani dengan kunci rilis."
+          else
+            echo "Tanpa keystore: APK pakai kunci debug (cadangan)."
+          fi
+
+      - name: Build release APK
+        run: gradle assembleRelease --no-daemon --stacktrace
+        env:
+          ITSME_KEYSTORE: ${{ steps.ks.outputs.path }}
+          ITSME_KEYSTORE_PASSWORD: ${{ secrets.ITSME_KEYSTORE_PASSWORD }}
+          ITSME_KEY_ALIAS: ${{ secrets.ITSME_KEY_ALIAS }}
+          ITSME_KEY_PASSWORD: ${{ secrets.ITSME_KEY_PASSWORD }}
 
       - name: Prepare APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk itsme-hp.apk
+        run: |
+          apk=$(find app/build/outputs/apk/release -name '*.apk' | head -n1)
+          test -n "$apk" || { echo "APK rilis tidak ditemukan"; exit 1; }
+          cp "$apk" itsme-hp.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4

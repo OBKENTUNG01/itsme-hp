@@ -9,15 +9,38 @@ android {
 
     defaultConfig {
         applicationId = "com.itsme.hp"
-        minSdk = 26
-        targetSdk = 34
+        minSdk = 26          // Android 8.0 - batas bawah yang didukung
+        targetSdk = 34       // Android 14; aplikasi tetap berjalan di Android 15/16+
         versionCode = 1
         versionName = "0.1"
+    }
+
+    signingConfigs {
+        create("release") {
+            // Diisi dari secret repo lewat workflow build (ITSME_KEYSTORE menunjuk ke
+            // berkas keystore yang sudah didekode). Kalau keystore tidak ada, build
+            // tetap jalan memakai kunci debug sebagai cadangan (lihat buildTypes).
+            val ks = System.getenv("ITSME_KEYSTORE")
+            if (ks != null && file(ks).exists()) {
+                storeFile = file(ks)
+                storePassword = System.getenv("ITSME_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ITSME_KEY_ALIAS")
+                keyPassword = System.getenv("ITSME_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            // Tanda tangani dengan kunci rilis kalau keystore tersedia; kalau tidak,
+            // pakai kunci debug supaya APK tetap bisa dipasang (hanya kurang "tepercaya").
+            val ks = System.getenv("ITSME_KEYSTORE")
+            signingConfig = if (ks != null && file(ks).exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
     compileOptions {
