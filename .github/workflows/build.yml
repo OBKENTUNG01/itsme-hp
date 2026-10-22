@@ -4,6 +4,23 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      app_name:
+        description: "Nama aplikasi (label di HP)"
+        required: false
+        default: ""
+      accent:
+        description: "Warna ikon, hex mis. #4F8CFF"
+        required: false
+        default: ""
+      app_id:
+        description: "Application ID (mis. com.itsme.hp)"
+        required: false
+        default: ""
+      version_name:
+        description: "Nama versi (mis. 0.2)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -13,6 +30,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # Terapkan pilihan dari Pembuat Aplikasi dashboard (nama, warna, id, versi).
+      # Kosong (mis. build dari push) = aplikasi apa adanya. versionCode dinaikkan
+      # tiap build supaya APK baru bisa menimpa yang lama saat dipasang.
+      - name: Customize app
+        run: python3 tools/customize.py
+        env:
+          HP_APP_NAME: ${{ github.event.inputs.app_name }}
+          HP_ACCENT: ${{ github.event.inputs.accent }}
+          HP_APP_ID: ${{ github.event.inputs.app_id }}
+          HP_VERSION_NAME: ${{ github.event.inputs.version_name }}
+          HP_VERSION_CODE: ${{ github.run_number }}
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
