@@ -21,7 +21,7 @@ android {
             // berkas keystore yang sudah didekode). Kalau keystore tidak ada, build
             // tetap jalan memakai kunci debug sebagai cadangan (lihat buildTypes).
             val ks = System.getenv("ITSME_KEYSTORE")
-            if (ks != null && file(ks).exists()) {
+            if (!ks.isNullOrBlank() && file(ks).exists()) {
                 storeFile = file(ks)
                 storePassword = System.getenv("ITSME_KEYSTORE_PASSWORD")
                 keyAlias = System.getenv("ITSME_KEY_ALIAS")
@@ -36,7 +36,7 @@ android {
             // Tanda tangani dengan kunci rilis kalau keystore tersedia; kalau tidak,
             // pakai kunci debug supaya APK tetap bisa dipasang (hanya kurang "tepercaya").
             val ks = System.getenv("ITSME_KEYSTORE")
-            signingConfig = if (ks != null && file(ks).exists()) {
+            signingConfig = if (!ks.isNullOrBlank() && file(ks).exists()) {
                 signingConfigs.getByName("release")
             } else {
                 signingConfigs.getByName("debug")
