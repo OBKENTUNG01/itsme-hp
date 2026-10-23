@@ -27,7 +27,10 @@ android {
                 // ditempel di GitHub - itu sebab umum "keystore password was incorrect".
                 storePassword = System.getenv("ITSME_KEYSTORE_PASSWORD")?.trim()
                 keyAlias = System.getenv("ITSME_KEY_ALIAS")?.trim()
-                keyPassword = System.getenv("ITSME_KEY_PASSWORD")?.trim()
+                // Keystore PKCS12 (bawaan keytool) memakai sandi store yang SAMA untuk
+                // key - keytool mengabaikan -keypass saat pembuatan. Jadi pakai sandi
+                // store untuk key, bukan ITSME_KEY_PASSWORD (sumber "key was tampered").
+                keyPassword = System.getenv("ITSME_KEYSTORE_PASSWORD")?.trim()
             }
         }
     }

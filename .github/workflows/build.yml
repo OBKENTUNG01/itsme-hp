@@ -74,8 +74,16 @@ jobs:
             echo "Tanpa keystore: APK pakai kunci debug (cadangan)."
           fi
 
+      # Coba tanda tangan RILIS dulu. Kalau gagal (mis. secret sandi keystore salah),
+      # JANGAN gagalkan build - ulangi tanpa keystore supaya APK tetap jadi memakai
+      # kunci debug (tetap bisa dipasang). Perbaiki ITSME_KEYSTORE_PASSWORD untuk rilis.
       - name: Build release APK
-        run: gradle assembleRelease --no-daemon --stacktrace
+        run: |
+          if ! gradle assembleRelease --no-daemon --stacktrace; then
+            echo "::warning::Tanda tangan rilis gagal (cek secret ITSME_KEYSTORE_PASSWORD). Membuat APK dengan kunci debug supaya tetap bisa dipasang."
+            unset ITSME_KEYSTORE ITSME_KEYSTORE_PASSWORD ITSME_KEY_ALIAS ITSME_KEY_PASSWORD
+            gradle assembleRelease --no-daemon --stacktrace
+          fi
         env:
           ITSME_KEYSTORE: ${{ steps.ks.outputs.path }}
           ITSME_KEYSTORE_PASSWORD: ${{ secrets.ITSME_KEYSTORE_PASSWORD }}
