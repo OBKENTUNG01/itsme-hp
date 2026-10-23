@@ -23,9 +23,11 @@ android {
             val ks = System.getenv("ITSME_KEYSTORE")
             if (!ks.isNullOrBlank() && file(ks).exists()) {
                 storeFile = file(ks)
-                storePassword = System.getenv("ITSME_KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("ITSME_KEY_ALIAS")
-                keyPassword = System.getenv("ITSME_KEY_PASSWORD")
+                // .trim() membuang spasi/baris-baru tak sengaja yang ikut saat secret
+                // ditempel di GitHub - itu sebab umum "keystore password was incorrect".
+                storePassword = System.getenv("ITSME_KEYSTORE_PASSWORD")?.trim()
+                keyAlias = System.getenv("ITSME_KEY_ALIAS")?.trim()
+                keyPassword = System.getenv("ITSME_KEY_PASSWORD")?.trim()
             }
         }
     }
