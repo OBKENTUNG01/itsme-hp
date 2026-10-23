@@ -49,8 +49,20 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.files).setOnClickListener { requestAllFiles() }
         findViewById<Button>(R.id.control).setOnClickListener {
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-            status("Di Setelan Aksesibilitas, nyalakan \"It's Me HP\" untuk mengizinkan kontrol.")
+            status("Nyalakan \"It's Me HP (kontrol)\". Kalau muncul \"Aplikasi tidak diberi akses\" (setelan terbatas), tekan \"Izinkan setelan terbatas\" di bawah dulu, lalu ulangi.")
         }
+        findViewById<Button>(R.id.restricted).setOnClickListener { allowRestricted() }
+    }
+
+    // Android 13+ memblokir izin Accessibility untuk aplikasi yang dipasang di luar
+    // Play Store ("setelan terbatas" / restricted settings). Ini BUKAN bug aplikasi dan
+    // tidak bisa dilewati lewat kode - pemilik HP harus membukanya sendiri dari halaman
+    // info aplikasi: titik tiga (pojok kanan atas) -> "Izinkan setelan terbatas".
+    private fun allowRestricted() {
+        startActivity(
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
+        )
+        status("Di halaman info aplikasi: tekan titik tiga (⋮) di pojok kanan atas, lalu pilih \"Izinkan setelan terbatas\". Setelah itu baru nyalakan \"Izinkan kontrol (Accessibility)\".")
     }
 
     private fun save() {
