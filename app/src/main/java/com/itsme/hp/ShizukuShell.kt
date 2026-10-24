@@ -5,6 +5,7 @@ import org.json.JSONObject
 import rikka.shizuku.Shizuku
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.lang.reflect.Method
 
 /** Perintah shell lewat Shizuku: hak `adb shell` tanpa root.
  *
@@ -42,7 +43,7 @@ object ShizukuShell {
     fun exec(cmd: String, timeoutMs: Long = 15000): JSONObject {
         if (!granted()) return error("Shizuku belum aktif atau belum diizinkan")
         val p = try {
-            Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null)
+            remoteProcess(arrayOf("sh", "-c", cmd))
         } catch (e: Throwable) {
             return error(e.message ?: e.javaClass.simpleName)
         }
@@ -64,6 +65,25 @@ object ShizukuShell {
     }
 
     private fun error(msg: String) = JSONObject().put("ok", false).put("error", msg)
+
+    // ponytail: Shizuku 13.1.5 menandai newProcess() privat, padahal ShizukuRemoteProcess
+    // (extends java.lang.Process) publik. Panggil lewat reflection; kalau Shizuku mengganti
+    // nama/ signature, ganti ke UserService (bindUserService) yang resmi.
+    private val newProcessMethod: Method? by lazy {
+        try {
+            Shizuku::class.java
+                .getDeclaredMethod("newProcess", Array<String>::class.java,
+                    Array<String>::class.java, String::class.java)
+                .apply { isAccessible = true }
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    private fun remoteProcess(cmd: Array<String>): Process {
+        val m = newProcessMethod ?: throw IllegalStateException("Shizuku tanpa newProcess")
+        return m.invoke(null, cmd, null, null) as Process
+    }
 
     private fun waitFor(p: Process, ms: Long): Boolean {
         val deadline = System.currentTimeMillis() + ms

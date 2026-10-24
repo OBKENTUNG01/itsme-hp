@@ -11,6 +11,8 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /** Layanan Accessibility: menjalankan sentuh/geser/ketik yang dikirim dari dashboard.
  *  Terlihat & harus diaktifkan pemilik di Setelan > Aksesibilitas. */
@@ -93,6 +95,7 @@ class HpAccessibility : AccessibilityService() {
      *  dashboard bisa "melihat" aplikasi apa yang terbuka, bukan hanya menekan titik. */
     fun uiTree(max: Int = 250): JSONObject {
         val out = JSONObject()
+        val done = CountDownLatch(1)
         val job = Runnable {
             val arr = JSONArray()
             fun walk(n: AccessibilityNodeInfo?, depth: Int) {
@@ -120,12 +123,10 @@ class HpAccessibility : AccessibilityService() {
             } catch (e: Exception) {
                 out.put("error", e.message ?: "gagal membaca layar")
             }
-            synchronized(out) { out.notifyAll() }
+            done.countDown()
         }
-        synchronized(out) {
-            main.post(job)
-            try { out.wait(3000) } catch (_: InterruptedException) {}
-        }
+        main.post(job)
+        try { done.await(3, TimeUnit.SECONDS) } catch (_: InterruptedException) {}
         return out
     }
 
