@@ -89,6 +89,46 @@ class HpAccessibility : AccessibilityService() {
         }
     }
 
+    /** Isi layar sekarang: teks/tombol yang terlihat beserta kotaknya. Ini yang membuat
+     *  dashboard bisa "melihat" aplikasi apa yang terbuka, bukan hanya menekan titik. */
+    fun uiTree(max: Int = 250): JSONObject {
+        val out = JSONObject()
+        val job = Runnable {
+            val arr = JSONArray()
+            fun walk(n: AccessibilityNodeInfo?, depth: Int) {
+                if (n == null || arr.length() >= max || depth > 30) return
+                val text = n.text?.toString()?.trim().orEmpty()
+                val desc = n.contentDescription?.toString()?.trim().orEmpty()
+                if (text.isNotEmpty() || desc.isNotEmpty() || n.isClickable || n.isEditable) {
+                    val r = android.graphics.Rect()
+                    n.getBoundsInScreen(r)
+                    arr.put(JSONObject().apply {
+                        put("cls", n.className?.toString()?.substringAfterLast('.') ?: "")
+                        if (text.isNotEmpty()) put("text", text.take(200))
+                        if (desc.isNotEmpty()) put("desc", desc.take(200))
+                        put("tap", n.isClickable)
+                        put("edit", n.isEditable)
+                        put("x", r.left); put("y", r.top)
+                        put("w", r.width()); put("h", r.height())
+                    })
+                }
+                for (i in 0 until n.childCount) walk(n.getChild(i), depth + 1)
+            }
+            try {
+                walk(rootInActiveWindow, 0)
+                out.put("nodes", arr)
+            } catch (e: Exception) {
+                out.put("error", e.message ?: "gagal membaca layar")
+            }
+            synchronized(out) { out.notifyAll() }
+        }
+        synchronized(out) {
+            main.post(job)
+            try { out.wait(3000) } catch (_: InterruptedException) {}
+        }
+        return out
+    }
+
     private fun focused(): AccessibilityNodeInfo? = findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
 
     private fun setText(node: AccessibilityNodeInfo, value: String) {

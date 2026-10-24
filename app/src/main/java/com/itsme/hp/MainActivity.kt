@@ -75,6 +75,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun start() {
         save()
+        // Shizuku (kalau terpasang) memberi hak adb shell: input, install app, ubah setelan.
+        // Dialog izinnya muncul sendiri; tanpa Shizuku, aplikasi tetap jalan seperti biasa.
+        if (ShizukuShell.available() && !ShizukuShell.granted()) ShizukuShell.request()
         if (prefs.getString("url", "").isNullOrBlank() || prefs.getString("token", "").isNullOrBlank()) {
             status("Isi alamat dashboard dan token dulu.")
             return
