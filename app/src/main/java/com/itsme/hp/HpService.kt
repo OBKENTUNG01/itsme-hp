@@ -80,7 +80,11 @@ class HpService : Service() {
             val caps = JSONArray().apply {
                 put("fs")
                 if (capture != null) put("screen")
-                if (HpAccessibility.instance != null) put("input")
+                if (HpAccessibility.instance != null) {
+                    put("input")
+                    put("uitree")
+                }
+                if (ShizukuShell.granted()) put("shell")
             }
             val req = JSONObject().apply {
                 put("name", name); put("token", token); put("caps", caps)
@@ -110,6 +114,32 @@ class HpService : Service() {
             }
             "fs_list" -> result(id, Files.list(cmd.optString("path", "")))
             "fs_read" -> result(id, Files.read(cmd.optString("path", "")))
+            "uitree" -> {
+                val acc = HpAccessibility.instance
+                if (acc == null) result(id, JSONObject().put("error", "Accessibility belum aktif"))
+                else result(id, acc.uiTree())
+            }
+            "global" -> {
+                val acc = HpAccessibility.instance
+                if (acc == null) {
+                    result(id, JSONObject().put("error", "Accessibility belum aktif"))
+                } else {
+                    acc.run(JSONArray().put(JSONObject().put("t", "key").put("key", cmd.optString("action"))),
+                        metrics().widthPixels, metrics().heightPixels)
+                    result(id, JSONObject().put("ok", true))
+                }
+            }
+            "shell" -> result(id, ShizukuShell.exec(cmd.optString("cmd"), cmd.optLong("timeout", 15000)))
+            "devowner" -> {
+                val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as android.app.admin.DevicePolicyManager
+                val owner = dpm.isDeviceOwnerApp(packageName)
+                result(id, JSONObject().apply {
+                    put("ok", true)
+                    put("owner", owner)
+                    put("hint", if (owner) "Aplikasi ini Device Owner." else
+                        "Belum Device Owner. Sekali saja lewat ADB: adb shell dpm set-device-owner com.itsme.hp/.HpAdmin (HP harus tanpa akun/baru).")
+                })
+            }
             "input" -> {
                 val acc = HpAccessibility.instance
                 if (acc == null) {
