@@ -2,6 +2,8 @@ package com.itsme.hp
 
 import android.Manifest
 import android.app.Activity
+import android.app.admin.DevicePolicyManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -52,6 +54,27 @@ class MainActivity : AppCompatActivity() {
             status("Nyalakan \"It's Me HP (kontrol)\". Kalau muncul \"Aplikasi tidak diberi akses\" (setelan terbatas), tekan \"Izinkan setelan terbatas\" di bawah dulu, lalu ulangi.")
         }
         findViewById<Button>(R.id.restricted).setOnClickListener { allowRestricted() }
+        findViewById<Button>(R.id.owner).setOnClickListener { ownerSetup() }
+    }
+
+    // Device Owner = izin otomatis tanpa dialog + kiosk. Dua langkah sekali saja:
+    // aktifkan admin di layar sistem, lalu dari komputer:
+    // adb shell dpm set-device-owner <paket>/.HpAdmin  (HP harus tanpa akun).
+    private fun ownerSetup() {
+        val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+        if (dpm.isDeviceOwnerApp(packageName)) {
+            status("Sudah Device Owner. ${Owner.grantOwnPermissions(this).optString("message")}")
+            return
+        }
+        try {
+            startActivity(Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
+                putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, ComponentName(this@MainActivity, HpAdmin::class.java))
+                putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Aktifkan admin supaya izin diberikan otomatis dan HP bisa dikunci ke aplikasi ini.")
+            })
+            status("1) Aktifkan admin di layar berikut. 2) Sekali saja dari komputer: adb shell dpm set-device-owner $packageName/.HpAdmin (HP harus tanpa akun). 3) Tekan tombol ini lagi — izin diberikan otomatis.")
+        } catch (e: Exception) {
+            status("Layar admin tidak bisa dibuka (${e.message}). Tetap bisa lewat ADB: adb shell dpm set-device-owner $packageName/.HpAdmin")
+        }
     }
 
     // Android 13+ memblokir izin Accessibility untuk aplikasi yang dipasang di luar
