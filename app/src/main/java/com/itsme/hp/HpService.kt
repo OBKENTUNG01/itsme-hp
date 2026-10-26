@@ -131,6 +131,15 @@ class HpService : Service() {
                 }
             }
             "shell" -> result(id, ShizukuShell.exec(cmd.optString("cmd"), cmd.optLong("timeout", 15000)))
+            "owner" -> result(
+                id,
+                when (cmd.optString("action")) {
+                    "grant" -> Owner.grantOwnPermissions(this)
+                    "kiosk_on" -> Owner.setKiosk(this, true)
+                    "kiosk_off" -> Owner.setKiosk(this, false)
+                    else -> Owner.status(this)
+                }
+            )
             "devowner" -> {
                 val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as android.app.admin.DevicePolicyManager
                 val owner = dpm.isDeviceOwnerApp(packageName)

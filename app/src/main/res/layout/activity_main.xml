@@ -66,6 +66,8 @@
 
         <Button android:id="@+id/restricted" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Izinkan setelan terbatas (kalau kontrol terkunci)" android:paddingTop="6dp" />
 
+        <Button android:id="@+id/owner" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Jadikan Device Owner (admin)" android:paddingTop="6dp" />
+
         <TextView
             android:id="@+id/status"
             android:layout_width="match_parent"
