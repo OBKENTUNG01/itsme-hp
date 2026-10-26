@@ -106,8 +106,9 @@ class HpService : Service() {
                 val w = cmd.optString("w", "1080").toIntOrNull() ?: 1080
                 val jpeg = capture?.frame(w)
                 if (jpeg != null) {
-                    val q = "id=${enc(id)}&name=${enc(name)}&token=${enc(token)}"
-                    Net.postBytes(base, "/api/hp/frame?$q", jpeg, "image/jpeg")
+                    // Token lewat header, bukan query: URL tercatat di log proxy/server.
+                    val q = "id=${enc(id)}&name=${enc(name)}"
+                    Net.postBytes(base, "/api/hp/frame?$q", jpeg, "image/jpeg", auth = token)
                 } else {
                     result(id, JSONObject().put("error", "layar tidak tersedia"))
                 }
