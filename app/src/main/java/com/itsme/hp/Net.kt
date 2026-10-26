@@ -35,7 +35,8 @@ object Net {
     }
 
     /** POST bytes mentah (mis. bingkai JPEG). Query sudah di dalam path. */
-    fun postBytes(base: String, path: String, bytes: ByteArray, contentType: String): Boolean {
+    fun postBytes(base: String, path: String, bytes: ByteArray, contentType: String,
+                  auth: String? = null): Boolean {
         var c: HttpURLConnection? = null
         return try {
             c = open(base, path)
@@ -43,6 +44,7 @@ object Net {
             c.readTimeout = 20000
             c.doOutput = true
             c.setRequestProperty("Content-Type", contentType)
+            if (auth != null) c.setRequestProperty("Authorization", "Bearer $auth")
             c.setFixedLengthStreamingMode(bytes.size)
             c.outputStream.use { it.write(bytes) }
             c.responseCode in 200..299
