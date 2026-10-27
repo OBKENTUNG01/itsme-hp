@@ -49,10 +49,7 @@ class MainActivity : AppCompatActivity() {
             status("Dihentikan.")
         }
         findViewById<Button>(R.id.files).setOnClickListener { requestAllFiles() }
-        findViewById<Button>(R.id.control).setOnClickListener {
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-            status("Nyalakan \"It's Me HP (kontrol)\". Kalau muncul \"Aplikasi tidak diberi akses\" (setelan terbatas), tekan \"Izinkan setelan terbatas\" di bawah dulu, lalu ulangi.")
-        }
+        findViewById<Button>(R.id.control).setOnClickListener { enableControl() }
         findViewById<Button>(R.id.restricted).setOnClickListener { allowRestricted() }
         findViewById<Button>(R.id.owner).setOnClickListener { ownerSetup() }
     }
@@ -77,6 +74,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /** Nyalakan layanan kontrol: otomatis kalau WRITE_SECURE_SETTINGS sudah diberikan,
+     *  kalau belum buka layar setelan seperti biasa. */
+    private fun enableControl() {
+        if (Auto.enableAccessibility(this)) {
+            status("Kontrol layar aktif otomatis (tanpa dialog). Tarik layar HP dari dashboard.")
+            return
+        }
+        startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        status("Nyalakan \"It's Me HP (kontrol)\".\n" +
+            "Kalau muncul \"setelan terbatas\", tekan tombol \"Izinkan setelan terbatas\", atau jalankan sekali dari komputer:\n" +
+            Auto.adbLine(this))
+    }
+
     // Android 13+ memblokir izin Accessibility untuk aplikasi yang dipasang di luar
     // Play Store ("setelan terbatas" / restricted settings). Ini BUKAN bug aplikasi dan
     // tidak bisa dilewati lewat kode - pemilik HP harus membukanya sendiri dari halaman
@@ -85,7 +95,9 @@ class MainActivity : AppCompatActivity() {
         startActivity(
             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
         )
-        status("Di halaman info aplikasi: tekan titik tiga (⋮) di pojok kanan atas, lalu pilih \"Izinkan setelan terbatas\". Setelah itu baru nyalakan \"Izinkan kontrol (Accessibility)\".")
+        status("Di halaman info aplikasi: titik tiga (⋮) kanan atas -> \"Izinkan setelan terbatas\".\n" +
+            "Cara yang lebih cepat (sekali saja, tanpa aplikasi lain): sambungkan HP ke komputer lalu jalankan\n" +
+            Auto.adbLine(this) + "\nSesudah itu tekan \"Kontrol layar\" — menyala sendiri tanpa dialog.")
     }
 
     private fun save() {

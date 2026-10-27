@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -9,6 +10,12 @@
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
     <!-- Izin memakai Shizuku (hak adb shell tanpa root). -->
     <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
+    <!-- Diberikan sekali lewat "adb shell pm grant ... WRITE_SECURE_SETTINGS".
+         Dengan izin ini layanan kontrol bisa dinyalakan aplikasi sendiri tanpa
+         layar "setelan terbatas" dan tanpa dialog izin. -->
+    <uses-permission
+        android:name="android.permission.WRITE_SECURE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
 
     <application
         android:allowBackup="false"
