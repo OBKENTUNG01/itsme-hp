@@ -36,6 +36,56 @@ class HpAccessibility : AccessibilityService() {
     override fun onInterrupt() {}
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
 
+    /** Tangkap layar lewat API Accessibility (Android 11+): TANPA dialog MediaProjection.
+     *
+     *  Cukup layanan ini aktif dan config memuat android:canTakeScreenshot="true".
+     *  Hasilnya HardwareBuffer -> Bitmap -> JPEG. null kalau tidak didukung/gagal.
+     */
+    fun screenshot(maxW: Int, quality: Int = 55, tungguMs: Long = 4000): ByteArray? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
+        val latch = CountDownLatch(1)
+        var hasil: ByteArray? = null
+        val exec = java.util.concurrent.Executor { r -> main.post(r) }
+        try {
+            takeScreenshot(
+                android.view.Display.DEFAULT_DISPLAY, exec,
+                object : TakeScreenshotCallback {
+                    override fun onSuccess(r: ScreenshotResult) {
+                        try {
+                            val bmp = android.graphics.Bitmap.wrapHardwareBuffer(
+                                r.hardwareBuffer, r.colorSpace
+                            )
+                            if (bmp != null) {
+                                val skala = if (bmp.width > maxW) maxW.toFloat() / bmp.width else 1f
+                                val out = if (skala < 1f)
+                                    android.graphics.Bitmap.createScaledBitmap(
+                                        bmp, maxW, (bmp.height * skala).toInt(), true
+                                    ) else bmp
+                                val bos = java.io.ByteArrayOutputStream()
+                                out.compress(android.graphics.Bitmap.CompressFormat.JPEG, quality, bos)
+                                if (out !== bmp) out.recycle()
+                                hasil = bos.toByteArray()
+                            }
+                            bmp?.recycle()
+                        } catch (_: Throwable) {
+                        } finally {
+                            r.hardwareBuffer.close()
+                            latch.countDown()
+                        }
+                    }
+
+                    override fun onFailure(kode: Int) {
+                        latch.countDown()
+                    }
+                }
+            )
+        } catch (_: Throwable) {
+            return null
+        }
+        latch.await(tungguMs, TimeUnit.MILLISECONDS)
+        return hasil
+    }
+
     /** Jalankan daftar aksi. sw/sh = ukuran layar nyata (piksel). */
     fun run(events: JSONArray, sw: Int, sh: Int) {
         main.post {

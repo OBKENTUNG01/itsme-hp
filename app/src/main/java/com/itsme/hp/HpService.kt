@@ -81,7 +81,8 @@ class HpService : Service() {
                 put("fs")
                 // Layar & input lewat Shizuku = tanpa dialog MediaProjection dan
                 // tanpa Accessibility, jadi tidak ada "setelan terbatas".
-                if (capture != null || ShellCapture.ready()) put("screen")
+                if (capture != null || HpAccessibility.instance != null || ShellCapture.ready())
+                    put("screen")
                 if (HpAccessibility.instance != null) {
                     put("input")
                     put("uitree")
@@ -108,7 +109,11 @@ class HpService : Service() {
         when (cmd.optString("type")) {
             "screen" -> {
                 val w = cmd.optString("w", "1080").toIntOrNull() ?: 1080
-                val jpeg = capture?.frame(w) ?: ShellCapture.frame(w)
+                // Urutan: MediaProjection (kalau sudah diizinkan) -> Accessibility
+                // (tanpa dialog, cukup layanan aktif) -> shell (Shizuku).
+                val jpeg = capture?.frame(w)
+                    ?: HpAccessibility.instance?.screenshot(w)
+                    ?: ShellCapture.frame(w)
                 if (jpeg != null) {
                     // Token lewat header, bukan query: URL tercatat di log proxy/server.
                     val q = "id=${enc(id)}&name=${enc(name)}"
