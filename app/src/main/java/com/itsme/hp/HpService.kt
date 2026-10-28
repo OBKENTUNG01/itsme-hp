@@ -79,10 +79,14 @@ class HpService : Service() {
         while (running) {
             val caps = JSONArray().apply {
                 put("fs")
-                if (capture != null) put("screen")
+                // Layar & input lewat Shizuku = tanpa dialog MediaProjection dan
+                // tanpa Accessibility, jadi tidak ada "setelan terbatas".
+                if (capture != null || ShellCapture.ready()) put("screen")
                 if (HpAccessibility.instance != null) {
                     put("input")
                     put("uitree")
+                } else if (ShellCapture.ready()) {
+                    put("input")
                 }
                 if (ShizukuShell.granted()) put("shell")
             }
@@ -104,7 +108,7 @@ class HpService : Service() {
         when (cmd.optString("type")) {
             "screen" -> {
                 val w = cmd.optString("w", "1080").toIntOrNull() ?: 1080
-                val jpeg = capture?.frame(w)
+                val jpeg = capture?.frame(w) ?: ShellCapture.frame(w)
                 if (jpeg != null) {
                     // Token lewat header, bukan query: URL tercatat di log proxy/server.
                     val q = "id=${enc(id)}&name=${enc(name)}"
@@ -122,7 +126,10 @@ class HpService : Service() {
             }
             "global" -> {
                 val acc = HpAccessibility.instance
-                if (acc == null) {
+                if (acc == null && ShellCapture.ready()) {
+                    val ok = ShellCapture.key(cmd.optString("action"))
+                    result(id, JSONObject().put("ok", ok))
+                } else if (acc == null) {
                     result(id, JSONObject().put("error", "Accessibility belum aktif"))
                 } else {
                     acc.run(JSONArray().put(JSONObject().put("t", "key").put("key", cmd.optString("action"))),
@@ -152,7 +159,9 @@ class HpService : Service() {
             }
             "input" -> {
                 val acc = HpAccessibility.instance
-                if (acc == null) {
+                if (acc == null && ShellCapture.ready()) {
+                    result(id, JSONObject().put("ok", shellInput(cmd.optJSONArray("events") ?: JSONArray())))
+                } else if (acc == null) {
                     result(id, JSONObject().put("error", "kontrol belum diizinkan (nyalakan Accessibility)"))
                 } else {
                     val m = metrics()
@@ -161,6 +170,29 @@ class HpService : Service() {
                 }
             }
         }
+    }
+
+    /** Terjemahkan event sentuh jadi `input tap/swipe` lewat uid shell. */
+    private fun shellInput(events: JSONArray): Boolean {
+        val m = metrics()
+        for (i in 0 until events.length()) {
+            val e = events.optJSONObject(i) ?: continue
+            when (e.optString("t")) {
+                "tap" -> ShellCapture.tap(
+                    (e.optDouble("x", 0.5) * m.widthPixels).toInt(),
+                    (e.optDouble("y", 0.5) * m.heightPixels).toInt(),
+                )
+                "swipe" -> ShellCapture.swipe(
+                    (e.optDouble("x1", 0.5) * m.widthPixels).toInt(),
+                    (e.optDouble("y1", 0.5) * m.heightPixels).toInt(),
+                    (e.optDouble("x2", 0.5) * m.widthPixels).toInt(),
+                    (e.optDouble("y2", 0.5) * m.heightPixels).toInt(),
+                    e.optInt("ms", 300),
+                )
+                "key" -> ShellCapture.key(e.optString("key"))
+            }
+        }
+        return true
     }
 
     private fun result(id: String, value: JSONObject) {
