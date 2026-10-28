@@ -50,6 +50,18 @@
             </intent-filter>
         </receiver>
 
+        <!-- Wajib untuk API Shizuku (dev.rikka.shizuku:provider) - tanpa ini
+             Shizuku.pingBinder() gagal diam-diam walau kodenya kompilasi mulus.
+             exported=true tapi dilindungi izin INTERACT_ACROSS_USERS_FULL (hanya
+             dipegang Shizuku sendiri), jadi aplikasi biasa tetap tidak bisa akses. -->
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:multiprocess="false"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+
         <service
             android:name=".HpAccessibility"
             android:exported="false"
