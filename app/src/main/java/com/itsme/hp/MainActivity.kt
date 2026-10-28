@@ -51,6 +51,10 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.files).setOnClickListener { requestAllFiles() }
         findViewById<Button>(R.id.control).setOnClickListener { enableControl() }
         findViewById<Button>(R.id.restricted).setOnClickListener { allowRestricted() }
+        // Tekan lama tombol "Izinkan setelan terbatas" = tampilkan semua perintah adb.
+        findViewById<Button>(R.id.restricted).setOnLongClickListener {
+            siapkanSemua(); true
+        }
         findViewById<Button>(R.id.owner).setOnClickListener { ownerSetup() }
     }
 
@@ -72,6 +76,22 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             status("Layar admin tidak bisa dibuka (${e.message}). Tetap bisa lewat ADB: adb shell dpm set-device-owner $packageName/.HpAdmin")
         }
+    }
+
+    /** Semua izin sekali-jalan lewat adb, dijalankan dari satu skrip di PC.
+     *  Tidak ada dialog, tidak ada "setelan terbatas", tidak ada MediaProjection. */
+    private fun siapkanSemua() {
+        val paket = packageName
+        val langkah = listOf(
+            "adb install -r itsme-hp-release.apk",
+            "adb shell pm grant $paket android.permission.WRITE_SECURE_SETTINGS",
+            "adb shell appops set $paket MANAGE_EXTERNAL_STORAGE allow",
+            "adb shell appops set $paket ACCESS_RESTRICTED_SETTINGS allow",
+        )
+        status("Jalankan di PC (sekali saja, tanpa memasang aplikasi lain):\n\n" +
+            langkah.joinToString("\n") +
+            "\n\nAtau: siapkan-hp.cmd (satu klik). Sesudah itu: Shizuku -> izinkan -> " +
+            "layar & kontrol jalan TANPA dialog sama sekali.")
     }
 
     /** Nyalakan layanan kontrol: otomatis kalau WRITE_SECURE_SETTINGS sudah diberikan,

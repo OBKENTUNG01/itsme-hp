@@ -64,6 +64,28 @@ object ShizukuShell {
         return JSONObject().put("ok", ok).put("out", out.toString())
     }
 
+    /** Jalankan perintah dan kembalikan keluaran BINER (mis. `screencap -p`). */
+    fun execBytes(cmd: String, timeoutMs: Long = 15000): ByteArray? {
+        if (!granted()) return null
+        val p = try {
+            remoteProcess(arrayOf("sh", "-c", cmd))
+        } catch (_: Throwable) {
+            return null
+        }
+        var data: ByteArray? = null
+        val reader = Thread {
+            try {
+                data = p.inputStream.readBytes()
+            } catch (_: Throwable) {
+            }
+        }
+        reader.start()
+        val finished = waitFor(p, timeoutMs)
+        if (!finished) p.destroy()
+        reader.join(800)
+        return if (finished) data else null
+    }
+
     private fun error(msg: String) = JSONObject().put("ok", false).put("error", msg)
 
     // ponytail: Shizuku 13.1.5 menandai newProcess() privat, padahal ShizukuRemoteProcess
