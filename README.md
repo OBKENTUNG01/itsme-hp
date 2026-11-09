@@ -83,15 +83,26 @@ biasa (Accessibility untuk sentuh, dialog rekam layar untuk lihat layar).
      `powershell -ExecutionPolicy Bypass -File tools\buat-kunci.ps1`
      Skrip membuat kunci di `Documents\ItsMe-HP-kunci` (`itsme.keystore`, `SANDI.txt`,
      `SIDIK-JARI.txt`) dan langsung memasang 4 secret repo **tanpa menampilkan sandinya**.
+     Tanpa GitHub CLI: jalankan dengan `-TanpaSecret`, lalu buat 4 secret di **Settings → Secrets
+     and variables → Actions**: `ITSME_KEYSTORE_B64` (hasil
+     `[Convert]::ToBase64String([IO.File]::ReadAllBytes("$env:USERPROFILE\Documents\ItsMe-HP-kunci\itsme.keystore")) | Set-Clipboard`,
+     lalu tempel), `ITSME_KEYSTORE_PASSWORD` dan `ITSME_KEY_PASSWORD` (isi baris kedua `SANDI.txt`),
+     serta `ITSME_KEY_ALIAS` = `itsme`.
   2. Simpan salinan folder itu di tempat aman (flashdisk / pengelola sandi). Jangan commit,
-     jangan unggah ke mana pun. Kalau kunci hilang, aplikasi di HP harus dipasang ulang.
+     jangan unggah ke mana pun. Kalau kunci hilang, aplikasi di HP harus dipasang ulang
+     (HP Device Owner: butuh reset pabrik).
   3. Build berikutnya (push, atau **Buat APK** di dashboard) otomatis memakai kunci itu. Di log
      build, langkah **Sidik jari tanda tangan APK** harus sama dengan isi `SIDIK-JARI.txt`.
 
   **Jangan** membuat kunci lewat GitHub Actions: artefak di repo publik bisa diunduh siapa pun
   yang punya akun GitHub (dulu ada workflow `make-keystore` yang melakukan itu; workflow itu
   sudah dihapus dan kuncinya diganti). **Mengganti kunci** (`tools\buat-kunci.ps1 -Timpa`)
-  berarti aplikasi di HP harus dicopot lalu dipasang ulang satu kali.
+  membuat APK baru **tidak bisa memperbarui** aplikasi yang sudah terpasang:
+  - HP biasa: nonaktifkan dulu **admin perangkat** It's Me HP (Setelan → Keamanan → Aplikasi admin
+    perangkat), copot aplikasinya, lalu pasang APK baru dan beri izinnya lagi.
+  - HP yang dijadikan **Device Owner**: aplikasinya **tidak bisa dicopot** tanpa reset pabrik. Jangan
+    ganti kunci sebelum ada rencana transisi, yaitu satu APK yang ditandatangani kunci lama + baru
+    (rotasi kunci APK Signature Scheme v3, Android 9+) supaya HP menerima kunci baru sebagai pembaruan.
 
   Tanpa keystore, build tetap jalan tetapi APK ditandatangani kunci **debug** (kurang
   tepercaya). Catatan jujur: karena dipasang di luar Play Store, Android **tetap**

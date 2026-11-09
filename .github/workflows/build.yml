@@ -53,7 +53,7 @@ jobs:
       # AGP akan mengunduh komponen yang kurang sendiri. Tidak pakai setup-android karena
       # versi aksinya mencoba memasang paket 'tools' yang sudah usang.
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+        uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3
         with:
           gradle-version: '8.9'
 
@@ -110,7 +110,13 @@ jobs:
         run: |
           bt=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n1)
           out=$("$ANDROID_HOME/build-tools/$bt/apksigner" verify --print-certs itsme-hp.apk)
-          echo "$out" | grep -E "certificate DN|SHA-256" | tee -a "$GITHUB_STEP_SUMMARY"
+          dn=$(echo "$out" | sed -n 's/.*certificate DN: //p' | head -n1)
+          hex=$(echo "$out" | sed -n 's/.*certificate SHA-256 digest: //p' | head -n1)
+          test -n "$hex" || { echo "Sidik jari tanda tangan tidak terbaca"; exit 1; }
+          # Format sama dengan SIDIK-JARI.txt (huruf besar, dipisah titik dua).
+          fmt=$(echo "$hex" | tr 'a-f' 'A-F' | sed 's/../&:/g; s/:$//')
+          printf 'Penanda tangan : %s\nSHA-256        : %s\n' "$dn" "$fmt"
+          { echo '```'; printf 'Penanda tangan : %s\nSHA-256        : %s\n' "$dn" "$fmt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4

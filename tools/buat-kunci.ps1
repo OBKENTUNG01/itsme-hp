@@ -10,7 +10,9 @@
       yang punya akun GitHub);
     - sandinya tidak pernah tampil di layar, tidak masuk baris perintah, dan tidak masuk log;
     - cadangannya disimpan di folder pribadimu (bawaan: Documents\ItsMe-HP-kunci).
-  Mengganti kunci berarti aplikasi di HP harus DICOPOT lalu DIPASANG ULANG satu kali.
+  Mengganti kunci berarti APK baru TIDAK bisa memperbarui aplikasi yang sudah terpasang. Di HP biasa:
+  nonaktifkan dulu "admin perangkat" It's Me HP, copot aplikasinya, lalu pasang APK baru. Di HP yang
+  dijadikan Device Owner aplikasinya tidak bisa dicopot tanpa reset pabrik: lihat README sebelum mengganti.
 
   Butuh: keytool (ikut Android Studio atau JDK 17+) dan, untuk memasang secret, GitHub CLI (gh) yang sudah login.
 
@@ -31,6 +33,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+# Path relatif dihitung dari lokasi PowerShell, sama untuk cmdlet DAN [IO.File] (yang memakai direktori proses).
+$Folder = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Folder)
 $Alias = "itsme"
 $SandiEnv = "ITSME_KS_SANDI_SEMENTARA"
 
@@ -124,11 +128,12 @@ try {
     $m = [regex]::Match($r.Out, "SHA256:\s*([0-9A-Fa-f:]{95})")
     if ($r.Code -ne 0 -or -not $m.Success) { throw "Kunci dibuat tetapi tidak bisa dibaca ulang (kode $($r.Code))." }
     $sidik = $m.Groups[1].Value.ToUpper()
+    $sidikHex = $sidik.Replace(":", "").ToLower()
 
     [IO.File]::WriteAllText($sandiFile, "Sandi keystore DAN key (alias '$Alias') untuk itsme.keystore:`r`n$sandi`r`n`r`n" +
         "JANGAN dibagikan, JANGAN di-commit. Simpan salinan folder ini di tempat aman (mis. flashdisk atau pengelola sandi).`r`n")
     [IO.File]::WriteAllText($sidikFile, "Sidik jari SHA-256 sertifikat penanda tangan It's Me HP (boleh dibagikan, bukan rahasia):`r`n" +
-        "$sidik`r`nDibuat: $(Get-Date -Format s)`r`n")
+        "$sidik`r`n(format apksigner: $sidikHex)`r`nDibuat: $(Get-Date -Format s)`r`n")
     Write-Host "Kunci   : $ks"
     Write-Host "Sidik   : $sidik"
 
@@ -159,4 +164,5 @@ try {
 Write-Host ""
 Write-Host "Selesai. Build APK berikutnya (push ke main, atau Buat APK di dashboard) memakai kunci ini."
 Write-Host "Cocokkan sidik jari di log build (langkah 'Sidik jari tanda tangan APK') dengan $sidikFile."
-Write-Host "PENTING: simpan salinan folder $Folder di tempat aman. Kalau kunci hilang, HP harus pasang ulang lagi."
+Write-Host "PENTING: simpan salinan folder $Folder di tempat aman. Kalau kunci hilang, aplikasi di HP harus dipasang ulang"
+Write-Host "(HP Device Owner: butuh reset pabrik)."
