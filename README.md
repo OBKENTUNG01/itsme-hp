@@ -78,11 +78,20 @@ biasa (Accessibility untuk sentuh, dialog rekam layar untuk lihat layar).
   `targetSdk` lama tetap jalan di Android 15/16+). Layanan latar sudah memakai tipe
   `mediaProjection` + izin `FOREGROUND_SERVICE_MEDIA_PROJECTION` (wajib sejak Android 14).
 - **Tanda tangan rilis (supaya lebih tepercaya & update bisa menimpa versi lama):**
-  1. Buka tab **Actions** repo ini → **make-keystore** → **Run workflow** (sekali saja).
-  2. Unduh artifact **itsme-keystore**, buka **SECRETS.txt**, lalu tambahkan **4 secret**
-     yang tertera di **Settings → Secrets and variables → Actions**. Simpan berkas
-     `itsme.keystore` sebagai cadangan (jangan commit).
-  3. Build berikutnya (push, atau **Buat APK** di dashboard) otomatis memakai kunci itu.
+  1. Di komputermu (butuh Android Studio atau JDK 17+, dan [GitHub CLI](https://cli.github.com/)
+     yang sudah `gh auth login`), dari folder repo ini jalankan:
+     `powershell -ExecutionPolicy Bypass -File tools\buat-kunci.ps1`
+     Skrip membuat kunci di `Documents\ItsMe-HP-kunci` (`itsme.keystore`, `SANDI.txt`,
+     `SIDIK-JARI.txt`) dan langsung memasang 4 secret repo **tanpa menampilkan sandinya**.
+  2. Simpan salinan folder itu di tempat aman (flashdisk / pengelola sandi). Jangan commit,
+     jangan unggah ke mana pun. Kalau kunci hilang, aplikasi di HP harus dipasang ulang.
+  3. Build berikutnya (push, atau **Buat APK** di dashboard) otomatis memakai kunci itu. Di log
+     build, langkah **Sidik jari tanda tangan APK** harus sama dengan isi `SIDIK-JARI.txt`.
+
+  **Jangan** membuat kunci lewat GitHub Actions: artefak di repo publik bisa diunduh siapa pun
+  yang punya akun GitHub (dulu ada workflow `make-keystore` yang melakukan itu; workflow itu
+  sudah dihapus dan kuncinya diganti). **Mengganti kunci** (`tools\buat-kunci.ps1 -Timpa`)
+  berarti aplikasi di HP harus dicopot lalu dipasang ulang satu kali.
 
   Tanpa keystore, build tetap jalan tetapi APK ditandatangani kunci **debug** (kurang
   tepercaya). Catatan jujur: karena dipasang di luar Play Store, Android **tetap**

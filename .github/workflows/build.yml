@@ -53,14 +53,15 @@ jobs:
       # AGP akan mengunduh komponen yang kurang sendiri. Tidak pakai setup-android karena
       # versi aksinya mencoba memasang paket 'tools' yang sudah usang.
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
         with:
           gradle-version: '8.9'
 
-      # Kalau 4 secret keystore ada, APK ditandatangani dengan kunci rilis tetap
+      # Kalau secret keystore ada, APK ditandatangani dengan kunci rilis tetap
       # (lebih tepercaya, update bisa menimpa versi lama). Kalau belum ada, build
-      # tetap jalan dengan kunci debug - jalankan workflow "make-keystore" sekali
-      # lalu tambahkan secret-nya (lihat README).
+      # tetap jalan dengan kunci debug. Kunci rilis dibuat DI KOMPUTER pemilik dengan
+      # tools/buat-kunci.ps1 (lihat README) - JANGAN lewat Actions: artefak di repo
+      # publik bisa diunduh siapa pun yang punya akun GitHub.
       - name: Decode keystore (kalau ada secret)
         id: ks
         env:
@@ -90,11 +91,26 @@ jobs:
           ITSME_KEY_ALIAS: ${{ secrets.ITSME_KEY_ALIAS }}
           ITSME_KEY_PASSWORD: ${{ secrets.ITSME_KEY_PASSWORD }}
 
+      # Kunci rilis tidak boleh tertinggal di runner selama langkah berikutnya (termasuk aksi
+      # pihak ketiga) berjalan: hapus segera setelah build, berhasil atau gagal.
+      - name: Hapus keystore dari runner
+        if: always()
+        run: rm -f "$RUNNER_TEMP/itsme.keystore"
+
       - name: Prepare APK
         run: |
           apk=$(find app/build/outputs/apk/release -name '*.apk' | head -n1)
           test -n "$apk" || { echo "APK rilis tidak ditemukan"; exit 1; }
           cp "$apk" itsme-hp.apk
+
+      # Sidik jari sertifikat penanda tangan (informasi PUBLIK, bukan rahasia) supaya bisa
+      # dicocokkan dengan SIDIK-JARI.txt dari tools/buat-kunci.ps1. "CN=Android Debug" berarti
+      # APK memakai kunci debug cadangan (secret keystore belum ada atau sandinya salah).
+      - name: Sidik jari tanda tangan APK
+        run: |
+          bt=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n1)
+          out=$("$ANDROID_HOME/build-tools/$bt/apksigner" verify --print-certs itsme-hp.apk)
+          echo "$out" | grep -E "certificate DN|SHA-256" | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -102,8 +118,11 @@ jobs:
           name: itsme-hp-apk
           path: itsme-hp.apk
 
+      # Hanya dari main (push, atau Buat APK di dashboard yang memicu ref main). Build uji dari
+      # cabang lain cukup menghasilkan artefak, tidak menimpa APK publik.
       - name: Publish to Releases (latest)
-        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: latest
           name: It's Me HP - APK terbaru
